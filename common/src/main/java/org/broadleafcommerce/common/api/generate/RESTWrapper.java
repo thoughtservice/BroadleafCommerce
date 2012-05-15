@@ -30,8 +30,6 @@ public @interface RESTWrapper {
 
     SuppressedElement[] suppressedElements() default {};
 
-    Class wrapperSuperClass();
-
-    Class modelInterface();
+    Class modelInterface() default Object.class;
 
 }

@@ -16,6 +16,7 @@
 
 package org.broadleafcommerce.core.catalog.domain;
 
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -99,7 +100,7 @@ import org.hibernate.annotations.Type;
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region="blStandardElements")
 @Searchable(alias="product", supportUnmarshall=SupportUnmarshall.FALSE)
 @AdminPresentationClass(populateToOneFields = PopulateToOneFieldsEnum.TRUE, friendlyName = "ProductImpl_baseProduct")
-@RESTWrapper(wrapperSuperClass = BaseWrapper.class, modelInterface = Product.class)
+@RESTWrapper
 public class ProductImpl implements Product {
 
 	private static final Log LOG = LogFactory.getLog(ProductImpl.class);
@@ -680,7 +681,7 @@ public class ProductImpl implements Product {
 
     public static void main(String[] items) {
         try {
-            JAXBWrapperFactory.emitWrapper(ProductImpl.class);
+            JAXBWrapperFactory.emitWrapper(ProductImpl.class, new File("/Users/jfischer/Desktop"));
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -51,7 +51,19 @@ import org.springframework.context.ApplicationContext;
  */
 public class JAXBWrapperFactory {
 
-    public static void emitWrapper(Class<?> modelClass) throws Exception {
+    public static void emitWrapper(Class<?> modelClass, File srcDir) throws Exception {
+        String superWrapperName;
+        Class<?> superClass = modelClass.getSuperclass();
+        if (superClass.equals(Object.class)) {
+            superWrapperName = BaseWrapper.class.getName();
+        } else {
+            superWrapperName = superClass.getName();
+            if (superWrapperName.endsWith("Impl")) {
+                superWrapperName = superWrapperName.substring(0, superWrapperName.lastIndexOf("Impl"));
+            }
+            superWrapperName += "Wrapper";
+        }
+
         String wrapperName = modelClass.getSimpleName();
         if (wrapperName.endsWith("Impl")) {
             wrapperName = wrapperName.substring(0, wrapperName.lastIndexOf("Impl"));
@@ -68,8 +80,20 @@ public class JAXBWrapperFactory {
         }
         RESTWrapper restWrapper = modelClass.getAnnotation(RESTWrapper.class);
 
-        Class<?> wrapperSuperClass = restWrapper.wrapperSuperClass();
+        JClass wrapperSuperClass = jCodeModel.directClass(superWrapperName);
         Class<?> modelInterface = restWrapper.modelInterface();
+        if (modelInterface.equals(Object.class)) {
+            String modelSimpleName = modelClass.getSimpleName();
+            for (Class<?> iface : modelClass.getInterfaces()) {
+                if (modelSimpleName.startsWith(iface.getSimpleName())) {
+                    modelInterface = iface;
+                    break;
+                }
+            }
+            if (modelInterface.equals(Object.class)) {
+                modelInterface = modelClass;
+            }
+        }
         jc._extends(wrapperSuperClass);
         jc._implements(jCodeModel.directClass(APIWrapper.class.getName()).narrow(modelInterface));
         jc._implements(jCodeModel.directClass(APIUnwrapper.class.getName()).narrow(modelInterface));
@@ -97,7 +121,7 @@ public class JAXBWrapperFactory {
         JClass baseWrapper = jCodeModel.directClass(BaseWrapper.class.getName());
         JFieldRef implementationClass = JExpr.ref("implementationClass");
         jWrapBlock.assign(implementationClass, model.invoke("getClass").invoke("getName"));
-        if (!wrapperSuperClass.equals(BaseWrapper.class)) {
+        if (!superWrapperName.equals(BaseWrapper.class.getName())) {
             jWrapBlock.directStatement("super.wrap(model, request);");
 
             for (SuppressedElement suppressedElement : restWrapper.suppressedElements()) {
@@ -117,7 +141,7 @@ public class JAXBWrapperFactory {
         unwrap.param(HttpServletRequest.class, "request");
         unwrap.param(ApplicationContext.class, "context");
         JVar unwrapped;
-        if (!wrapperSuperClass.equals(BaseWrapper.class)) {
+        if (!superWrapperName.equals(BaseWrapper.class.getName())) {
             unwrapped = jUnwrapBlock.decl(jCodeModel.ref(modelInterface), "unwrapped", JExpr._super().invoke(unwrap));
         } else {
             jUnwrapBlock.directStatement("if (implementationClass == null) throw new RuntimeException(\"Cannot unwrap object when implementationClass is null!\");");
@@ -145,6 +169,6 @@ public class JAXBWrapperFactory {
 
         jUnwrapBlock._return(unwrapped);
 
-        jCodeModel.build(new File("/Users/jfischer/Desktop"));
+        jCodeModel.build(srcDir);
     }
 }
