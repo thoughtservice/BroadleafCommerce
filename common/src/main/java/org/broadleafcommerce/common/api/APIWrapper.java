@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.broadleafcommerce.core.web.api.wrapper;
+package org.broadleafcommerce.common.api;
 
 import javax.servlet.http.HttpServletRequest;
 

@@ -1,8 +1,8 @@
-package org.broadleafcommerce.core.web.api.wrapper;
-
-import org.springframework.context.ApplicationContext;
+package org.broadleafcommerce.common.api;
 
 import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.context.ApplicationContext;
 
 /**
  * This interface is the super interface for all classes that will provide a JAXB unwrapper

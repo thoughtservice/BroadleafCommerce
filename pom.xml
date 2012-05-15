@@ -535,7 +535,7 @@
                 <artifactId>servlet-api</artifactId>
                 <version>2.5</version>
                 <type>jar</type>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>javax.servlet.jsp</groupId>
@@ -1092,6 +1092,12 @@
                 <groupId>org.owasp.antisamy</groupId>
                 <artifactId>antisamy</artifactId>
                 <version>1.4.5</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.sun.codemodel</groupId>
+                <artifactId>codemodel</artifactId>
+                <version>2.6</version>
                 <scope>compile</scope>
             </dependency>
         </dependencies>

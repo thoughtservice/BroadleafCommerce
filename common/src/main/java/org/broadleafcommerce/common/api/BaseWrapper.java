@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package org.broadleafcommerce.core.web.api.wrapper;
+package org.broadleafcommerce.common.api;
 
-import org.broadleafcommerce.common.persistence.EntityConfiguration;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlTransient;
+
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-
-import javax.annotation.Resource;
-import javax.xml.bind.annotation.XmlTransient;
 
 /**
  * Base class for APIWrapper implementations to inject the EntityConfiguration reference.
@@ -31,6 +30,9 @@ public abstract class BaseWrapper implements ApplicationContextAware {
 
     @XmlTransient
     protected ApplicationContext context;
+
+    @XmlElement
+    protected String implementationClass;
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {

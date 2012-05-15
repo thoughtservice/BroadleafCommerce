@@ -16,6 +16,7 @@
 
 package org.broadleafcommerce.core.catalog.domain;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
@@ -43,8 +44,13 @@ import javax.persistence.OrderBy;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
+import com.sun.codemodel.JClassAlreadyExistsException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadleafcommerce.common.api.BaseWrapper;
+import org.broadleafcommerce.common.api.generate.JAXBWrapperFactory;
+import org.broadleafcommerce.common.api.generate.RESTElement;
+import org.broadleafcommerce.common.api.generate.RESTWrapper;
 import org.broadleafcommerce.common.presentation.AdminPresentation;
 import org.broadleafcommerce.common.presentation.AdminPresentationClass;
 import org.broadleafcommerce.common.presentation.PopulateToOneFieldsEnum;
@@ -93,6 +99,7 @@ import org.hibernate.annotations.Type;
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region="blStandardElements")
 @Searchable(alias="product", supportUnmarshall=SupportUnmarshall.FALSE)
 @AdminPresentationClass(populateToOneFields = PopulateToOneFieldsEnum.TRUE, friendlyName = "ProductImpl_baseProduct")
+@RESTWrapper(wrapperSuperClass = BaseWrapper.class, modelInterface = Product.class)
 public class ProductImpl implements Product {
 
 	private static final Log LOG = LogFactory.getLog(ProductImpl.class);
@@ -124,6 +131,7 @@ public class ProductImpl implements Product {
     @SearchableProperty(name="productName")
     @Index(name="PRODUCT_NAME_INDEX", columnNames={"NAME"})
     @AdminPresentation(friendlyName = "ProductImpl_Product_Name", order=1, group = "ProductImpl_Product_Description", prominent=true, columnWidth="25%", groupOrder=1)
+    @RESTElement
     protected String name;
 
     /** The description. */
@@ -668,6 +676,14 @@ public class ProductImpl implements Product {
         } else if (!skus.equals(other.skus))
             return false;
         return true;
+    }
+
+    public static void main(String[] items) {
+        try {
+            JAXBWrapperFactory.emitWrapper(ProductImpl.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }
