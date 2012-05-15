@@ -23,6 +23,9 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.File;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.HashSet;
 
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JCatchBlock;
@@ -41,6 +44,7 @@ import org.apache.commons.beanutils.PropertyUtils;
 import org.broadleafcommerce.common.api.APIUnwrapper;
 import org.broadleafcommerce.common.api.APIWrapper;
 import org.broadleafcommerce.common.api.BaseWrapper;
+import org.broadleafcommerce.common.money.Money;
 import org.springframework.context.ApplicationContext;
 
 /**
@@ -57,11 +61,7 @@ public class JAXBWrapperFactory {
         if (superClass.equals(Object.class)) {
             superWrapperName = BaseWrapper.class.getName();
         } else {
-            superWrapperName = superClass.getName();
-            if (superWrapperName.endsWith("Impl")) {
-                superWrapperName = superWrapperName.substring(0, superWrapperName.lastIndexOf("Impl"));
-            }
-            superWrapperName += "Wrapper";
+            superWrapperName = createWrapperClassname(superClass);
         }
 
         String wrapperName = modelClass.getSimpleName();
@@ -103,8 +103,6 @@ public class JAXBWrapperFactory {
 
         //@XmlAccessorType(value = XmlAccessType.FIELD)
         jc.annotate(XmlAccessorType.class).param("value", XmlAccessType.FIELD);
-
-        //TODO Do something similar to emit the wrapper field for any collections or maps
 
         JMethod wrap = jc.method(JMod.PUBLIC, jc.owner().VOID, "wrap");
         wrap.annotate(Override.class);
@@ -156,7 +154,13 @@ public class JAXBWrapperFactory {
         for (Field field : fields) {
             if (field.isAnnotationPresent(RESTElement.class)) {
                 //@XmlElement
-                JFieldVar myField = jc.field(JMod.PROTECTED, field.getType(), field.getName());
+                JFieldVar myField;
+                if (field.getType().isPrimitive() || isBasicType(field.getType())) {
+                    myField = jc.field(JMod.PROTECTED, field.getType(), field.getName());
+                } else {
+                    JClass myClass = jCodeModel.directClass(createWrapperClassname(field.getType()));
+                    myField = jc.field(JMod.PROTECTED, myClass, field.getName());
+                }
                 myField.annotate(XmlElement.class);
                 jWrapBlock.assign(myField, propertyUtils.staticInvoke("getProperty").arg(model).arg(field.getName()));
                 jUnwrapBlock.staticInvoke(propertyUtils, "setProperty").arg(unwrapped).arg(field.getName()).arg(myField);
@@ -170,5 +174,41 @@ public class JAXBWrapperFactory {
         jUnwrapBlock._return(unwrapped);
 
         jCodeModel.build(srcDir);
+    }
+
+    private static String createWrapperClassname(Class<?> myClass) {
+        String superWrapperName;
+        superWrapperName = myClass.getName();
+        if (superWrapperName.endsWith("Impl")) {
+            superWrapperName = superWrapperName.substring(0, superWrapperName.lastIndexOf("Impl"));
+        }
+        superWrapperName += "Wrapper";
+
+        return superWrapperName;
+    }
+
+    private static final HashSet<Class<?>> BASIC_TYPES = getBasicTypes();
+
+    public static boolean isBasicType(Class<?> clazz) {
+        return BASIC_TYPES.contains(clazz);
+    }
+
+    private static HashSet<Class<?>> getBasicTypes() {
+        HashSet<Class<?>> ret = new HashSet<Class<?>>();
+        ret.add(Boolean.class);
+        ret.add(Character.class);
+        ret.add(Byte.class);
+        ret.add(Short.class);
+        ret.add(Integer.class);
+        ret.add(Long.class);
+        ret.add(Float.class);
+        ret.add(Double.class);
+
+        ret.add(Date.class);
+        ret.add(Money.class);
+        ret.add(BigDecimal.class);
+        ret.add(String.class);
+
+        return ret;
     }
 }

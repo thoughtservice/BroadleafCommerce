@@ -189,6 +189,7 @@ public class ProductImpl implements Product {
     @OneToOne(optional = true, targetEntity = SkuImpl.class)
     @JoinColumn(name = "SKU_ID")
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region="blStandardElements")
+    @RESTElement
     protected Sku defaultSku;
     
     /** The skus. */
