@@ -16,29 +16,8 @@
 
 package org.broadleafcommerce.admin.client.presenter.promotion;
 
-import org.broadleafcommerce.admin.client.datasource.promotion.CustomerListDataSourceFactory;
-import org.broadleafcommerce.admin.client.datasource.promotion.FulfillmentGroupListDataSourceFactory;
-import org.broadleafcommerce.admin.client.datasource.promotion.OfferItemCriteriaListDataSourceFactory;
-import org.broadleafcommerce.admin.client.datasource.promotion.OfferItemTargetCriteriaListDataSourceFactory;
-import org.broadleafcommerce.admin.client.datasource.promotion.OfferListDataSourceFactory;
-import org.broadleafcommerce.admin.client.datasource.promotion.OrderItemListDataSourceFactory;
-import org.broadleafcommerce.admin.client.datasource.promotion.OrderListDataSourceFactory;
-import org.broadleafcommerce.admin.client.view.promotion.OfferDisplay;
-import org.broadleafcommerce.openadmin.client.BLCMain;
-import org.broadleafcommerce.openadmin.client.datasource.dynamic.DynamicEntityDataSource;
-import org.broadleafcommerce.openadmin.client.datasource.dynamic.ListGridDataSource;
-import org.broadleafcommerce.openadmin.client.presenter.entity.DynamicEntityPresenter;
-import org.broadleafcommerce.openadmin.client.reflection.Instantiable;
-import org.broadleafcommerce.openadmin.client.setup.AsyncCallbackAdapter;
-import org.broadleafcommerce.openadmin.client.setup.NullAsyncCallbackAdapter;
-import org.broadleafcommerce.openadmin.client.setup.PresenterSetupItem;
-import org.broadleafcommerce.openadmin.client.view.dynamic.AdditionalFilterEventManager;
-import org.broadleafcommerce.openadmin.client.view.dynamic.FilterBuilderAdditionalEventHandler;
-import org.broadleafcommerce.openadmin.client.view.dynamic.FilterRestartCallback;
-import org.broadleafcommerce.openadmin.client.view.dynamic.FilterStateRunnable;
-import org.broadleafcommerce.openadmin.client.view.dynamic.ItemBuilderDisplay;
-
 import com.smartgwt.client.data.DataSource;
+import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Label;
@@ -62,9 +41,34 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.toolbar.ToolStripButton;
+import org.broadleafcommerce.admin.client.datasource.promotion.CustomerListDataSourceFactory;
+import org.broadleafcommerce.admin.client.datasource.promotion.FulfillmentGroupListDataSourceFactory;
+import org.broadleafcommerce.admin.client.datasource.promotion.OfferItemCriteriaListDataSourceFactory;
+import org.broadleafcommerce.admin.client.datasource.promotion.OfferItemTargetCriteriaListDataSourceFactory;
+import org.broadleafcommerce.admin.client.datasource.promotion.OfferListDataSourceFactory;
+import org.broadleafcommerce.admin.client.datasource.promotion.OrderItemListDataSourceFactory;
+import org.broadleafcommerce.admin.client.datasource.promotion.OrderListDataSourceFactory;
+import org.broadleafcommerce.admin.client.view.promotion.OfferDisplay;
+import org.broadleafcommerce.openadmin.client.BLCMain;
+import org.broadleafcommerce.openadmin.client.callback.SearchItemSelected;
+import org.broadleafcommerce.openadmin.client.callback.SearchItemSelectedHandler;
+import org.broadleafcommerce.openadmin.client.datasource.dynamic.DynamicEntityDataSource;
+import org.broadleafcommerce.openadmin.client.datasource.dynamic.ListGridDataSource;
+import org.broadleafcommerce.openadmin.client.dto.ClassTree;
+import org.broadleafcommerce.openadmin.client.presenter.entity.DynamicEntityPresenter;
+import org.broadleafcommerce.openadmin.client.reflection.Instantiable;
+import org.broadleafcommerce.openadmin.client.setup.AsyncCallbackAdapter;
+import org.broadleafcommerce.openadmin.client.setup.NullAsyncCallbackAdapter;
+import org.broadleafcommerce.openadmin.client.setup.PresenterSetupItem;
+import org.broadleafcommerce.openadmin.client.view.dynamic.AdditionalFilterEventManager;
+import org.broadleafcommerce.openadmin.client.view.dynamic.FilterBuilderAdditionalEventHandler;
+import org.broadleafcommerce.openadmin.client.view.dynamic.FilterRestartCallback;
+import org.broadleafcommerce.openadmin.client.view.dynamic.FilterStateRunnable;
+import org.broadleafcommerce.openadmin.client.view.dynamic.ItemBuilderDisplay;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -153,7 +157,7 @@ public class OfferPresenter extends DynamicEntityPresenter implements Instantiab
 
     @Override
     protected void addClicked() {
-        Map<String, Object> initialValues = new HashMap<String, Object>();
+        initialValues = new HashMap<String, Object>();
         initialValues.put("name", BLCMain.getMessageManager().getString("offerNameDefault"));
         initialValues.put("type", "ORDER_ITEM");
         initialValues.put("value", 0);
@@ -162,8 +166,20 @@ public class OfferPresenter extends DynamicEntityPresenter implements Instantiab
         initialValues.put("deliveryType", "AUTOMATIC");
         initialValues.put("discountType", "PERCENT_OFF");
         initialValues.put("combinableWithOtherOffers", true);
-        initialValues.put("_type", new String[]{((DynamicEntityDataSource) getDisplay().getListDisplay().getGrid().getDataSource()).getDefaultNewEntityFullyQualifiedClassname()});
-        getDisplay().getListDisplay().getGrid().startEditingNew(initialValues);
+        ((DynamicEntityDataSource) getDisplay().getListDisplay().getGrid().getDataSource()).resetVisibilityOnly("name");
+        final String newItemTitle = BLCMain.getMessageManager().getString("newItemTitle");
+        LinkedHashMap<String, String> polymorphicEntities = ((DynamicEntityDataSource) display.getListDisplay().getGrid().getDataSource()).getPolymorphicEntities();
+        if (polymorphicEntities.size() > 1) {
+            BLCMain.POLYMORPHIC_ADD.search(BLCMain.getMessageManager().getString("selectPolymorphicType"), polymorphicEntities, new SearchItemSelectedHandler() {
+                @Override
+                public void onSearchItemSelected(SearchItemSelected event) {
+                    ((DynamicEntityDataSource) display.getListDisplay().getGrid().getDataSource()).setDefaultNewEntityFullyQualifiedClassname(event.getRecord().getAttribute("fullyQualifiedType"));
+                    addNewItem(newItemTitle, new String[]{"name"}, null);
+                }
+            });
+        } else {
+            addNewItem(newItemTitle, new String[]{"name"}, null);
+        }
     }
 
     @Override
@@ -352,6 +368,16 @@ public class OfferPresenter extends DynamicEntityPresenter implements Instantiab
                         } else {
                             formPresenter.setStartState();
                             getPresenterSequenceSetupManager().getDataSource("offerDS").resetVisibilityOnly("name", "description", "type", "discountType","maxUsesPerCustomer", "maxUsesPerOrder", "value", "priority", "startDate", "endDate");
+                            //show fields that were inherited from a subclass
+                            for (DataSourceField field : getPresenterSequenceSetupManager().getDataSource("offerDS").getFields()) {
+                                String inheritedFromType = field.getAttribute("inheritedFromType");
+                                if (inheritedFromType != null) {
+                                    ClassTree tree = getPresenterSequenceSetupManager().getDataSource("offerDS").getPolymorphicEntityTree().find(inheritedFromType);
+                                    if (tree != null && tree.getLeft() > 1) {
+                                        field.setHidden(false);
+                                    }
+                                }
+                            }
                             getDisplay().getDynamicFormDisplay().getFormOnlyDisplay().buildFields(getDisplay().getListDisplay().getGrid().getDataSource(), true, true, false, selectedRecord);
                             getDisplay().getDynamicFormDisplay().getFormOnlyDisplay().getForm().editRecord(selectedRecord);
                             getDisplay().getListDisplay().getRemoveButton().enable();
