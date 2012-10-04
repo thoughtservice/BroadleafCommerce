@@ -336,6 +336,18 @@ public class OfferPresenter extends DynamicEntityPresenter implements Instantiab
                     getDisplay().getRestrictionSectionView().setVisible(true);
                 } else {
                     getPresenterSequenceSetupManager().getDataSource("offerDS").resetVisibilityOnly("name", "description", "type", "discountType","maxUsesPerCustomer", "maxUsesPerOrder", "value", "priority", "startDate", "endDate");
+                    //show fields that were inherited from a subclass
+                    for (DataSourceField field : getPresenterSequenceSetupManager().getDataSource("offerDS").getFields()) {
+                        String inheritedFromType = field.getAttribute("inheritedFromType");
+                        if (inheritedFromType != null) {
+                            ClassTree tree = getPresenterSequenceSetupManager().getDataSource("offerDS").getPolymorphicEntityTree().find(inheritedFromType);
+                            String hidden = field.getAttribute("permanentlyHidden");
+                            Boolean hiddenBool = hidden == null || Boolean.parseBoolean(hidden);
+                            if (tree != null && tree.getLeft() > 1 && !hiddenBool) {
+                                field.setHidden(false);
+                            }
+                        }
+                    }
                     getDisplay().getAdvancedItemCriteria().setVisible(false);
                     getDisplay().getAdvancedItemCriteriaTarget().setVisible(false);
                     getDisplay().getRestrictionSectionView().setVisible(false);
@@ -373,7 +385,9 @@ public class OfferPresenter extends DynamicEntityPresenter implements Instantiab
                                 String inheritedFromType = field.getAttribute("inheritedFromType");
                                 if (inheritedFromType != null) {
                                     ClassTree tree = getPresenterSequenceSetupManager().getDataSource("offerDS").getPolymorphicEntityTree().find(inheritedFromType);
-                                    if (tree != null && tree.getLeft() > 1) {
+                                    String hidden = field.getAttribute("permanentlyHidden");
+                                    Boolean hiddenBool = hidden == null || Boolean.parseBoolean(hidden);
+                                    if (tree != null && tree.getLeft() > 1 && !hiddenBool) {
                                         field.setHidden(false);
                                     }
                                 }
