@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 
 
 
-public interface OfferTier {
+public interface OfferTier extends Comparable<OfferTier>{
 
     Long getId();
 
