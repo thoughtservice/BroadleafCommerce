@@ -54,6 +54,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -133,9 +134,9 @@ public class OrderServiceImpl implements OrderService {
             extensionManager.attachAdditionalDataToNewNamedCart(customer, namedOrder);
         }
         
-        //FIXME: apa fix this
-        namedOrder.setLocale(BroadleafRequestContext.getBroadleafRequestContext().getLocale());
-        
+        if (BroadleafRequestContext.getBroadleafRequestContext() != null) {
+            namedOrder.setLocale(BroadleafRequestContext.getBroadleafRequestContext().getLocale());
+        }
         
         return orderDao.save(namedOrder); // No need to price here
     }
